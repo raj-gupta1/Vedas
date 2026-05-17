@@ -4,6 +4,18 @@ A premium data curation, extraction, and evaluation pipeline for fine-tuning and
 
 ---
 
+## 🎯 Project Objectives & Roadmap
+This repository forms the foundation for data curation to enable:
+* **Model Fine-Tuning**: Supervised Fine-Tuning (SFT) and Continued Pre-training (CPT) of open-source LLMs on custom, high-fidelity Sanskrit-Hindi Vedic datasets.
+* **Quantization**: Quantizing the fine-tuned LLM models (e.g., GGUF, AWQ, GPTQ) for efficient, local, and low-latency inference.
+* **Rigorous Evaluation & Comparative Analysis**: Systematic benchmarking of performance and accuracy across:
+  * **Base Model** (pre-trained, unmodified)
+  * **Fine-Tuned Model** (specifically trained on Vedic nuances)
+  * **Quantized Model** (evaluating trade-offs in speed vs. diacritic/Sanskrit fidelity)
+  * **RAG (Retrieval-Augmented Generation)** (comparing fine-tuning against vector database search context)
+
+---
+
 ## 🚀 Key Features
 
 ### 1. SFT Dataset Generation (`prepareData.py`)
