@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+vedas/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables
+.env
+
+# Large datasets & books
+books/
+pipeline_checkpoint_*.jsonl
+continueousPreTrainData.jsonl
