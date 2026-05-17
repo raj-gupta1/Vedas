@@ -19,6 +19,4 @@ vedas/
 .env
 
 # Large datasets & books
-books/
-pipeline_checkpoint_*.jsonl
-continueousPreTrainData.jsonl
+
