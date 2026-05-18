@@ -18,20 +18,21 @@ vedas/
 # Environment variables
 .env
 
-# Large data files
-*.jsonl
-*.pdf
-pipeline_checkpoint_*.jsonl
+# Large datasets & books
 books/
+pipeline_checkpoint_*.jsonl
+continueousPreTrainData.jsonl
+*.jsonl
+data/**/*.jsonl
+*.pdf
+books/**/*.pdf
 
-# Model weights, checkpoints, optimizer states, eval results
+# Models and local workspaces
+base_model_local/
+workspace/
+outputs/
+checkpoints/
 *.safetensors
 *.pt
 *.pth
 *.bin
-*.gguf
-outputs/
-**/outputs/
-base_model_local/
-workspace/
-distillery_workspace/
