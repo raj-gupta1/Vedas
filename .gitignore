@@ -22,3 +22,13 @@ vedas/
 books/
 pipeline_checkpoint_*.jsonl
 continueousPreTrainData.jsonl
+*.jsonl
+data/**/*.jsonl
+*.pdf
+books/**/*.pdf
+
+# Models and local workspaces
+base_model_local/
+continuousPreTrainStyle/
+qaAlpacaStyle/
+workspace/
