@@ -32,7 +32,13 @@ base_model_local/
 workspace/
 outputs/
 checkpoints/
+checkpoint-*/
+model/
+data/
+eval_results/
+runs/
 *.safetensors
+*.gguf
 *.pt
 *.pth
 *.bin
