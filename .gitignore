@@ -29,6 +29,10 @@ books/**/*.pdf
 
 # Models and local workspaces
 base_model_local/
-continuousPreTrainStyle/
-qaAlpacaStyle/
 workspace/
+outputs/
+checkpoints/
+*.safetensors
+*.pt
+*.pth
+*.bin
