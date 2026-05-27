@@ -8,8 +8,8 @@ START_PAGE = 0
 END_PAGE = None  # Set to None to extract the ENTIRE book, or a number (e.g. 600) for a specific end page
 CHUNKS_PER_PAGE = 4  # Number of chunks per page (e.g. 4 or 5)
 OVERLAP_CHARACTERS = 150  # Overlap in characters between consecutive chunks to ensure context isn't lost
-PDF_PATH = "../books/atharvaVedHindiSanskrit.pdf"
-OUTPUT_PATH = "continueousPreTrainData.jsonl"
+PDF_PATH = "../books/Translation-Of-The-Sama-Veda.pdf"
+OUTPUT_PATH = "Translation_Of_The_Sama_Veda.jsonl"
 
 def extract_pages(pdf_path: str, start: int, end: int | None) -> list[tuple[int, str]]:
     """Extract text from specified pages of the PDF, returning (page_num, text)."""
