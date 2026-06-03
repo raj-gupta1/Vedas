@@ -1,92 +1,165 @@
-# VedaGPT Data Preparation Pipeline 🪶
+# VedaGPT: Continued Pre-Training, Fine-Tuning & RAG Pipeline 🪶
 
-A premium data curation, extraction, and evaluation pipeline for fine-tuning and pre-training Large Language Models (LLMs) on ancient Indian Vedic literature (Sanskrit and Hindi), starting with the Atharva Veda.
-
----
-
-## 🎯 Project Objectives & Roadmap
-This repository forms the foundation for data curation to enable:
-* **Model Fine-Tuning**: Supervised Fine-Tuning (SFT) and Continued Pre-training (CPT) of open-source LLMs on custom, high-fidelity Sanskrit-Hindi Vedic datasets.
-* **Quantization**: Quantizing the fine-tuned LLM models (e.g., GGUF, AWQ, GPTQ) for efficient, local, and low-latency inference.
-* **Rigorous Evaluation & Comparative Analysis**: Systematic benchmarking of performance and accuracy across:
-  * **Base Model** (pre-trained, unmodified)
-  * **Fine-Tuned Model** (specifically trained on Vedic nuances)
-  * **Quantized Model** (evaluating trade-offs in speed vs. diacritic/Sanskrit fidelity)
-  * **RAG (Retrieval-Augmented Generation)** (comparing fine-tuning against vector database search context)
+A premium data curation, model fine-tuning, deployment, and Retrieval-Augmented Generation (RAG) evaluation pipeline for ancient Indian Vedic literature (Sanskrit, Hindi, and English), starting with the four primary Vedas: **Rig Veda**, **Sama Veda**, **Yajur Veda**, and **Atharva Veda**.
 
 ---
 
-## 🚀 Key Features
+## 🎯 Architecture & Roadmap
+The project contains two distinct architectures designed to run in a sequential workflow:
+1. **Continuous Pre-Training & QLoRA Fine-Tuning**: Infusing deep domain-specific Vedic knowledge into the model parameters using high-performance GPU fine-tuning.
+2. **Retrieval-Augmented Generation (RAG) & Evaluation**: Supplementing the custom fine-tuned and quantized models with a vector database (MongoDB Atlas) and evaluating the performance using the Ragas framework.
 
-### 1. SFT Dataset Generation (`prepareData.py`)
-* **Intelligent LLM-in-the-loop Extraction**: Generates diverse, high-quality question-answering (Instruction-Output) pairs directly from complex multi-lingual PDF layouts.
-* **Auto-Judging & Evaluation**: Integrated evaluation step that scores each generated pair from `1` to `10` on relevance, context consistency, and hallucination metrics.
-* **Granular Progress Saving**: Saves progress incrementally into range-specific checkpoint files (`pipeline_checkpoint_x_y.jsonl`) to ensure zero progress loss.
-* **Master Registry**: Appends the rich-metadata generated records directly into your master `train.jsonl`.
+```mermaid
+graph TD
+    A[Vedic PDF/Web Corpus] -->|prepareData / Scrapers| B[Raw text chunks]
+    B -->|Jupyter Notebook on GPU| C[QLoRA Fine-Tuning]
+    C -->|Entire book shown| D[LoRA Adapter & Merged Model]
+    D -->|Pushed to Hub| E[Hugging Face Hub]
+    E -->|GGUF Export| F[Local Ollama / Inference]
+    
+    B -->|Ingestion & Embedding| G[(MongoDB Vector DB)]
+    G -->|Vector Search & Re-ranking| H[RAG Retrieval Pipeline]
+    H -->|Prompt Context| I[Local Fine-Tuned LLM]
+    I -->|Answers| J[Ragas Evaluation Suite]
+    J -->|Evaluator LLM| K[Local Ollama: Gemma 3]
+```
 
-### 2. Dataset Cleaning & Post-Processing (`clean_dataset.py`)
-* **Zero-Loss Filtering**: Reads your master `train.jsonl` and extracts only the `"instruction"` and `"output"` fields required for training.
-* **Separate Output**: Saves the cleaned records into a new file **`cleaned_train.jsonl`** while keeping the original `train.jsonl` with all its valuable audit metrics (hallucination scores, reasoning, and page sources) untouched.
+---
 
-### 3. Continued Pre-Training (PT) Preparation (`prepareContinueousPreTrainData.py`)
-* **Full-Book Extraction**: Reads unstructured raw texts across any specified page range (or the entire book).
-* **Sliding Window Overlap Chunks**: Splices page text into a configurable number of chunks per page (e.g. 4 or 5) with a sliding character-overlap window (defaults to `150` characters). This ensures sentence structures and mantras are not truncated at chunk boundaries.
-* **Standard PT Format**: Automatically formats chunks into standard `{"text": "..."}` structures inside **`continueousPreTrainData.jsonl`**.
+## 💻 Tech Stack & Models Used
+
+### 1. Base Model
+* **Model**: `unsloth/Llama-3.2-3B-Instruct`
+* Loaded in **4-bit quantization** (`nf4` double quantization) via Unsloth during fine-tuning, and via `BitsAndBytesConfig` during local inference for high-speed computation on consumer GPUs.
+
+### 2. Fine-Tuning (GPU-Powered)
+* **Pipeline**: Handled entirely inside the Jupyter Notebook `continuousPreTrainStyle/qloraFineTune.ipynb` on a high-performance GPU (Google Colab / Jupyter environment).
+* **Training strategy**: Once initial parameters and hyperparameters were stable, the model was shown the **entire book** to ensure thorough semantic comprehension and alignment.
+* *Note: The scripts `continuousPreTrainStyle/finetuneContinueousPretrain.py` and `continuousPreTrainStyle/evaluateContinueousPretrain.py` are deprecated and not used.*
+
+### 3. Model Deployment & Quantization
+* **Hugging Face Hub Repositories**:
+  * **LoRA Adapters**: `shinigamiRaj/Vedas-Llama-3.2-3B-LoRA`
+  * **Merged 16-bit Model**: `shinigamiRaj/Vedas-Llama-3.2-3B-Merged`
+* **Local Quantization**: 
+  * Exported to **GGUF format** using the `q4_k_m` quantization method for efficient, CPU/GPU-split local inference (via Ollama or LM Studio).
+  * 4-bit local quantization runs on non-Apple devices via `bitsandbytes`.
+
+### 4. RAG (Retrieval-Augmented Generation)
+* **Vector Database**: **MongoDB Atlas Vector Search** (Index name: `vedic_index`).
+* **Embedding Model**: `BAAI/bge-base-en-v1.5` (outputs 768-dimensional vectors).
+* **Two-Stage Retrieval Pipeline**:
+  * **Stage 1 (Vector Search)**: Fast, broad recall using cosine similarity vector search on MongoDB Atlas.
+  * **Stage 2 (Cross-Encoder Re-ranking)**: Precise re-scoring of candidate passages using `BAAI/bge-reranker-v2-m3` to yield the top relevant contexts.
+
+### 5. RAG Evaluation (Ragas Framework)
+* **Evaluation Toolkit**: **Ragas** (evaluating Context Precision, Context Recall, Faithfulness, and Answer Relevancy).
+* **Evaluator LLM**: Local Ollama model **`gemma3:4b-it-qat`** (Quantization-Aware Trained model running locally on Ollama at `http://127.0.0.1:11434`, bypassing OpenAI API costs).
+
+---
+
+## 🛠️ Step-by-Step Execution Guide
+
+To run the pipeline, you must follow this exact order: **1. Continuous Pre-Training Style** followed by **2. RAG Style**.
+
+### Phase 1: Continuous Pre-Training & Inference
+
+1. **Configure Environment Variables**:
+   Create a `.env` file in the root directory (and `RAGStyle/.env`) and add your keys:
+   ```env
+   HF_TOKEN=your_huggingface_write_token
+   MONGODB_URI="your_mongodb_connection_string"
+   ```
+
+2. **Scrape or Prepare Raw Text**:
+   Extract and chunk book pages from PDFs or scrapers:
+   ```bash
+   python3 continuousPreTrainStyle/prepareContinueousPreTrainData.py
+   ```
+
+3. **Run GPU Fine-Tuning**:
+   * Open `continuousPreTrainStyle/qloraFineTune.ipynb` in Google Colab or your local GPU environment.
+   * Run all cells to mount Google Drive, install Unsloth/Transformers dependencies, chunk the dataset with a 20% sliding overlap, apply the Llama-3 chat template, fine-tune the model on the **entire book**, and push adapters/merged weights to Hugging Face.
+
+4. **Run Local Fine-Tuned Inference**:
+   Test the custom fine-tuned model directly on your local machine:
+   ```bash
+   python3 continuousPreTrainStyle/inference.py
+   ```
+
+---
+
+### Phase 2: RAG Ingestion, Retrieval & Evaluation
+
+1. **Ingest and Embed Data**:
+   Embed and upload the scriptures to MongoDB Atlas using the upgraded BGE embeddings:
+   ```bash
+   python3 RAGStyle/ingest_data.py
+   ```
+   *Make sure you configure your MongoDB Vector Search Index (`vedic_index`) to use `numDimensions: 768`.*
+
+2. **Run Interactive RAG CLI**:
+   Ask questions to the fine-tuned model boosted by vector search and Cross-Encoder re-ranking:
+   ```bash
+   python3 RAGStyle/rag_inference.py
+   ```
+
+3. **Start Local Ollama Server**:
+   Make sure Ollama is installed and running, then pull the evaluator model:
+   ```bash
+   ollama pull gemma3:4b-it-qat
+   ```
+
+4. **Run RAG Evaluation**:
+   Benchmarking the RAG system using Ragas and local Ollama:
+   ```bash
+   python3 RAGStyle/evaluate_rag.py
+   ```
+   The results will output to `RAGStyle/eval_results.json` and a human-readable summary will save to `RAGStyle/eval_summary.txt`.
+
+---
+
+## 🐳 Docker Setup
+A Dockerfile is provided to quickly build a containerized environment with all system and Python libraries installed.
+
+### 1. Build the Docker Image
+```bash
+docker build -t vedagpt-pipeline .
+```
+
+### 2. Run the Container
+You can run any script inside the container by overriding the command. Mount your `.env` file to pass credentials:
+```bash
+# Run RAG Inference (Default CMD)
+docker run -it --env-file .env vedagpt-pipeline
+
+# Run Data Ingestion
+docker run -it --env-file .env vedagpt-pipeline python RAGStyle/ingest_data.py
+
+# Run RAG Evaluation (Ensure Ollama is running and accessible from the container)
+docker run -it --env-file .env vedagpt-pipeline python RAGStyle/evaluate_rag.py
+```
 
 ---
 
 ## 📂 Project Structure
-
 ```text
-├── books/                             # PDF source books (Atharva Veda, etc.)
-├── pipeline_checkpoint_*.jsonl       # Incremental SFT generation checkpoints
-├── train.jsonl                        # Master SFT dataset (with rich audit metadata)
-├── cleaned_train.jsonl                # Clean SFT training file (instruction, output only)
-├── continueousPreTrainData.jsonl      # Overlapping raw text chunks for pre-training
-├── prepareData.py                     # SFT generation and evaluation pipeline
-├── clean_dataset.py                   # SFT training dataset cleaner
-├── prepareContinueousPreTrainData.py  # Pre-training sliding overlap data preparer
-├── .gitignore                         # Git files exclusion configuration
-└── README.md                          # Project overview and documentation
+├── books/                             # PDF source books (Sama Veda, etc.)
+├── continuousPreTrainStyle/           # Continued Pre-training files
+│   ├── data/                          # Folder for pre-train datasets
+│   ├── lora_model/                    # Local LoRA adapter files
+│   ├── qloraFineTune.ipynb            # [ACTIVE] GPU Fine-tuning & deployment notebook
+│   ├── prepareContinueousPreTrainData.py # PDF overlapping page-chunk extractor
+│   ├── inference.py                   # Local fine-tuned model tester
+│   ├── finetuneContinueousPretrain.py # [DEPRECATED] Unused local training script
+│   └── evaluateContinueousPretrain.py # [DEPRECATED] Unused local evaluation script
+├── RAGStyle/                          # RAG and Evaluation files
+│   ├── .env                           # RAG environment secrets
+│   ├── ingest_data.py                 # MongoDB vector search ingestor
+│   ├── rag_inference.py               # Interactive RAG search & chat script
+│   └── evaluate_rag.py                # Ragas evaluation runner (via Ollama)
+├── Dockerfile                         # Container setup for libraries installation
+├── requirements.txt                   # Master Python library dependency list
+├── .env                               # Root environment secrets
+└── README.md                          # Main project documentation
 ```
-
----
-
-## 🛠️ Quick Start & Usage
-
-Ensure you have your virtual environment activated:
-```bash
-source vedas/bin/activate
-```
-
-### 1. Generate SFT Dataset
-To process new pages and add high-quality instruction-output pairs with LLM scoring, configure `START_PAGE` and `END_PAGE` in `prepareData.py` and run:
-```bash
-python prepareData.py
-```
-
-### 2. Clean the SFT Dataset for Fine-Tuning
-To strip the metadata and prepare `cleaned_train.jsonl` for training:
-```bash
-python clean_dataset.py
-```
-
-### 3. Generate Pre-Training Chunks
-To parse the book and extract overlapping text blocks for continued pre-training:
-```bash
-python prepareContinueousPreTrainData.py
-```
-
----
-
-## 📝 Configuration Variables
-Both python data scripts are fully customizable by editing their top-level constants:
-
-* **SFT Pipeline (`prepareData.py`)**:
-  * `START_PAGE` / `END_PAGE`: Process specific page segments.
-  * `CHUNKS_PER_PAGE`: Control granularity of page splitting.
-  * `SAMPLES_PER_CHUNK`: Number of instruction pairs to generate per chunk.
-
-* **PT Pipeline (`prepareContinueousPreTrainData.py`)**:
-  * `CHUNKS_PER_PAGE`: Number of text chunks per page.
-  * `OVERLAP_CHARACTERS`: Number of overlapping characters between consecutive chunks.

@@ -1,0 +1,24 @@
+VedaGPT RAG Evaluation Summary
+==================================================
+
+Evaluator LLM: gemma3:4b-it-qat
+Embedding Model: BAAI/bge-base-en-v1.5
+Re-ranker: BAAI/bge-reranker-v2-m3
+Questions evaluated: 1
+
+Scores:
+  context_precision: 1.0000
+  context_recall: 1.0000
+  faithfulness: 1.0000
+  answer_relevancy: 0.9795
+
+
+Per-question breakdown:
+--------------------------------------------------
+
+Q1: N/A
+  Answer (first 200 chars): 
+  context_precision: 1.0000
+  context_recall: 1.0000
+  faithfulness: 1.0000
+  answer_relevancy: 0.9795

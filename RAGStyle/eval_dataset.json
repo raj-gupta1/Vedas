@@ -1,0 +1,88 @@
+[
+  {
+    "question": "What is the role of Agni in the Rig Veda?",
+    "ground_truth": "Agni is the god of fire and is the primary mediator between humans and gods. He is invoked as the priest of the sacrifice, the messenger who carries offerings to the gods. In Rig Veda Book 1, Hymn I, Agni is praised as the household priest, divine minister of sacrifice, and the bestower of treasures. He is described as worthy of worship by ancient sages and those of the present day.",
+    "ground_truth_contexts": [
+      "HYMN I\nAgni\n\n1. I Laud Agni, the chosen Priest, God, minister of sacrifice, The hotar, lavishest of wealth.\n2. Worthy is Agni to be praised by living as by ancient seers. He shall bring hitherward the Gods.\n3. Through Agni man obtaineth wealth, yea, plenty waxing day by day, Most rich in heroes, glorious."
+    ]
+  },
+  {
+    "question": "What does the Nasadiya Sukta (Hymn of Creation) say about the origin of the universe?",
+    "ground_truth": "The Nasadiya Sukta (Rig Veda Book 10, Hymn CXXIX) describes the state before creation when there was neither existence nor non-existence, neither death nor immortality. It states that in the beginning there was darkness wrapped in darkness, and that desire (kama) was the first seed of mind. The hymn famously ends with profound agnosticism, questioning whether even the highest deity knows how creation came about.",
+    "ground_truth_contexts": [
+      "HYMN CXXIX\nCreation\n\n1. THEN was not non-existent nor existent: there was no realm of air, no sky beyond it. What covered in, and where? and what gave shelter? Was water there, unfathomed depth of water?\n2. Death was not then, nor was there aught immortal: no sign was there, the day's and night's divider. That One Thing, breathless, breathed by its own nature: apart from it was nothing whatsoever."
+    ]
+  },
+  {
+    "question": "Who is Indra and what are his main deeds according to the Vedas?",
+    "ground_truth": "Indra is the king of the gods and the god of thunder, rain, and war. His most celebrated deed is the slaying of the serpent demon Vritra, who had blocked the waters and caused drought. By defeating Vritra, Indra released the rivers and brought rain and fertility to the earth. He is praised as the most invoked deity in the Rig Veda, celebrated for his strength, heroism, and consumption of Soma.",
+    "ground_truth_contexts": [
+      "HYMN XXXII\nIndra\n\n1. I WILL declare the manly deeds of Indra, the first that he achieved, the Thunder-wielder. He slew the Dragon, then disclosed the waters, and cleft the channels of the mountain torrents.\n2. He slew the Dragon lying on the mountain: his heavenly bolt of thunder Tvaṣṭar fashioned. Like lowing kine in rapid flow descending the waters glided downward to the ocean."
+    ]
+  },
+  {
+    "question": "What prayers are offered for unity and harmony in the Rig Veda?",
+    "ground_truth": "Rig Veda Book 10, Hymn CXCI contains prayers for unity and harmony. It calls for assembled people to speak together, to have minds of one accord, with common purpose and worship. It invokes the idea that as ancient Gods sat united at their appointed share, so should people have united thoughts and a common resolve for all to happily agree.",
+    "ground_truth_contexts": [
+      "HYMN CXCI\nAgni\n\n1. THOU, mighty Agni, gatherest up all that is precious for thy friend. Bring us all treasures as thou art enkindled in libation's place\n2 Assemble, speak together: let your minds be all of one accord, As ancient Gods unanimous sit down to their appointed share.\n3 The place is common, common the assembly, common the mind, so be their thought united. A common purpose do I lay before you, and worship with your general oblation.\n4 One and the same be your resolve, and be your minds of one accord. United be the thoughts of all that all may happily agree."
+    ]
+  },
+  {
+    "question": "What is the Gayatri Mantra and which Veda is it from?",
+    "ground_truth": "The Gayatri Mantra comes from the Rig Veda (Book 3, Hymn LXII, verse 10). It is addressed to Savitar (the Sun god) and is one of the most sacred mantras in Hinduism. The mantra is a meditation on the brilliant light of Savitar, asking that divine light to illuminate and inspire the intellect of the worshipper.",
+    "ground_truth_contexts": [
+      "HYMN LXII\nIndra and Others\n\n10. May we attain that excellent glory of Savitar the God: So may he stimulate our prayers."
+    ]
+  },
+  {
+    "question": "What is the significance of Soma in Vedic rituals?",
+    "ground_truth": "Soma is a sacred ritual drink pressed from a plant and offered to the gods, especially Indra. The entire 9th Book (Mandala) of the Rig Veda is dedicated to Soma Pavamana (purified Soma). Soma is described as a divine drink that gives immortality, strength, and inspiration. It flows through the pressing stones, is purified through filters of sheep's wool, and is offered into the fire as an oblation to invoke the gods.",
+    "ground_truth_contexts": [
+      "BOOK IX\nHYMN I\nSoma Pavamana\n\n1. IN sweetest and most gladdening stream flow pure, O Soma, on thy way, Pressed out for Indra, for his drink.\n2. Fiend-queller, Friend of all men, he hath with the wood attained unto His place, his iron-fashioned home.\n3. Be thou best Vṛtra-slayer, best granter of bliss, most liberal: Promote our wealthy princes' gifts."
+    ]
+  },
+  {
+    "question": "What does the Atharva Veda say about healing and medicine?",
+    "ground_truth": "The Atharva Veda contains numerous hymns related to healing, medicine, and charms against diseases. It includes prayers against specific ailments like dysentery, fever, and wounds. For example, Book 1, Hymn II contains a charm against dysentery, and Book 1, Hymn III contains prayers against constipation and urinary problems. These hymns invoke divine forces and natural elements like herbs and waters for their healing powers.",
+    "ground_truth_contexts": [
+      "BOOK I\nHYMN II\nA charm against dysentery\n\n1. We know the father of the shaft, Parjanya, liberal nourisher, Know well his mother: Prithivī, Earth with her manifold designs.\n2. Do thou, O Bowstring, bend thyself around us: make my body stone. Firm in thy strength drive far away malignities and hateful things.",
+      "BOOK I\nHYMN III\nA charm against constipation and suppression of urine\n\n1. We know the father of the shaft, Parjanya strong with hundred powers: By this may I bring health unto thy body: let the channels pour their burthen freely as of old."
+    ]
+  },
+  {
+    "question": "What is the Purusha Sukta and what does it describe?",
+    "ground_truth": "The Purusha Sukta (Rig Veda Book 10, Hymn XC) describes the cosmic sacrifice of Purusha, the primeval cosmic being. From this sacrifice, the entire universe was created. The hymn states that Purusha had a thousand heads, eyes, and feet, pervading the earth on every side. From the sacrifice of Purusha came the Vedic hymns, horses, cattle, the four varnas (social orders), and the cosmic elements like the moon, sun, Indra, and Agni.",
+    "ground_truth_contexts": [
+      "HYMN XC\nPurusha\n\n1. A THOUSAND heads hath Puruṣa, a thousand eyes, a thousand feet. On every side pervading earth he fills a space ten fingers wide.\n2. This Puruṣa is all that yet hath been and all that is to be; The Lord of Immortality which waxes greater still by food."
+    ]
+  },
+  {
+    "question": "What does the Atharva Veda say about Vachaspati and divine knowledge?",
+    "ground_truth": "The Atharva Veda Book 1, Hymn I is a prayer to Vachaspati (Lord of Speech) for divine illumination and help. It asks Vachaspati to assign strength and powers, to come with divine intelligence, and to ensure that knowledge and Sacred Lore remain with the worshipper. The prayer invokes Vachaspati to spread sheltering arms and confirm knowledge in the seeker.",
+    "ground_truth_contexts": [
+      "BOOK I\nHYMN I\nA prayer to Vāchaspati for divine illumination and help.\n\n1. Now may Vāchaspati assign to me the strength and powers of Those Who, wearing every shape and form, the triple seven, are wandering round.\n2. Come thou again, Vāchaspati, come with divine intelligence. Vasoshpati, repose thou here. In me be Knowledge, yea, in me.\n3. Here, even here, spread sheltering arms like the two bow-ends strained with cord. This let Vāchaspati confirm. In me be Knowledge, yea, in me.\n4. Vāchaspati hath been invoked: may he invite us in reply. May we adhere to Sacred Lore. Never may I be reft thereof."
+    ]
+  },
+  {
+    "question": "How are the Waters personified and praised in the Vedas?",
+    "ground_truth": "The Waters are personified as divine mothers and goddesses in the Vedas. In the Atharva Veda Book 1, Hymns IV and V, they are praised as bringers of prosperity, strength, and bliss. They are called upon to nourish cattle, aid sacrifice, and grant procreant strength. The waters are described as containing Amrit (nectar of immortality) and balm, with supreme control over men.",
+    "ground_truth_contexts": [
+      "BOOK I\nHYMN IV\nTo the waters, for the prosperity of cattle\n\n1. Along their paths the Mothers go, sisters of priestly ministrants, Blending their water with the mead.\n2. May yonder Waters near the Sun, or those wherewith the Sun is joined, Send forth this sacrifice of ours.\n3. I call the Waters, Goddesses, hitherward where our cattle drink: The streams must share the sacrifice.\n4. Amrit is in the Waters, in the Waters balm. Yea, through our praises of the Floods, O horses, be ye fleet and strong, and, O ye kine, be full of strength.",
+      "BOOK I\nHYMN V\nTo the waters, for strength and power\n\n1. Ye, Waters, truly bring us bliss: so help ye us to strength and power That we may look on great delight."
+    ]
+  },
+  {
+    "question": "What is the significance of the Ushas (Dawn) hymns in the Rig Veda?",
+    "ground_truth": "Ushas (Dawn) is one of the most beautifully praised deities in the Rig Veda. She is personified as a radiant young woman who opens the gates of heaven each morning, bringing light and dispelling darkness. She is praised for awakening all creatures, inspiring singers, and bestowing wealth and long life. The Dawn hymns celebrate her beauty, regularity, and role in cosmic order (Rita).",
+    "ground_truth_contexts": [
+      "HYMN XLVIII\nDawn\n\n1. DAWN on us with prosperity, O Uṣas, Daughter of the Sky, Dawn with great glory, Goddess, Lady of the Light, dawn thou with riches, Bounteous One."
+    ]
+  },
+  {
+    "question": "What role does Varuna play in the Vedic texts?",
+    "ground_truth": "Varuna is one of the oldest and most important Vedic deities, regarded as the supreme upholder of cosmic and moral order (Rita). He is the lord of the waters, the sky, and the celestial ocean. Varuna is associated with the night sky and is feared as the divine judge who punishes sin and falsehood. He is also invoked for forgiveness of sins, and his all-seeing eyes (the stars) keep watch over human conduct.",
+    "ground_truth_contexts": [
+      "HYMN XXV\nVaruṇa\n\n1. WHATEVER law of thine, O God, O Varuṇa, as we are men, Day after day we violate.\n2. give us not as a prey to death, to be destroyed by thee in wrath, To thy fierce anger when displeased."
+    ]
+  }
+]
