@@ -60,62 +60,118 @@ graph TD
 
 ## 🛠️ Step-by-Step Execution Guide
 
-To run the pipeline, you must follow this exact order: **1. Continuous Pre-Training Style** followed by **2. RAG Style**.
+To run the pipeline, you must follow the execution order below. The workflow is divided into two phases: **1. Continuous Pre-Training Style** followed by **2. RAG Style**.
+
+```mermaid
+graph TD
+    subgraph Phase 1: Continuous Pre-Training Style
+        direction TB
+        P1_1[1. Run Web Scrapers:<br>scrape_*.py] --> P1_2[2. Run PDF Extractor:<br>prepareContinueousPreTrainData.py]
+        P1_2 --> P1_3[3. Run Train/Val Split:<br>splitContinueousPretrainData.py]
+        P1_3 --> P1_4[4. Fine-Tune on GPU:<br>qloraFineTune.ipynb]
+        P1_4 --> P1_5[5. Run Local Inference:<br>inference.py]
+        P1_5 --> P1_6[6. Evaluate Models:<br>evaluate_all_models.py]
+    end
+
+    subgraph Phase 2: RAG Style
+        direction TB
+        P1_6 --> P2_1[7. Setup MongoDB Atlas Manually<br>Create DB, Collection & Index]
+        P2_1 --> P2_2[8. Ingest Vector Chunks:<br>ingest_data.py]
+        P2_2 --> P2_3[9. Run RAG Inference:<br>rag_inference.py]
+        P2_3 --> P2_4[10. Run RAG Evaluation:<br>evaluate_rag.py]
+    end
+```
 
 ### Phase 1: Continuous Pre-Training & Inference
 
 1. **Configure Environment Variables**:
-   Create a `.env` file in the root directory (and `RAGStyle/.env`) and add your keys:
+   Ensure you have configured your environment keys in the root `.env` (and `RAGStyle/.env`):
    ```env
    HF_TOKEN=your_huggingface_write_token
    MONGODB_URI="your_mongodb_connection_string"
    ```
 
-2. **Scrape or Prepare Raw Text**:
-   Extract and chunk book pages from PDFs or scrapers:
+2. **Scrape Web Sources**:
+   Run the web scrapers inside the `continuousPreTrainStyle` folder to fetch the scripture texts:
+   ```bash
+   python3 continuousPreTrainStyle/scrape_rig_veda.py
+   python3 continuousPreTrainStyle/scrape_sama_veda.py
+   python3 continuousPreTrainStyle/scrape_yajur_veda.py
+   python3 continuousPreTrainStyle/scrape_atharva_veda.py
+   ```
+
+3. **Extract PDF Data**:
+   Extract and chunk bilingual text from PDF manuscripts with sliding window overlap:
    ```bash
    python3 continuousPreTrainStyle/prepareContinueousPreTrainData.py
    ```
 
-3. **Run GPU Fine-Tuning**:
-   * Open `continuousPreTrainStyle/qloraFineTune.ipynb` in Google Colab or your local GPU environment.
-   * Run all cells to mount Google Drive, install Unsloth/Transformers dependencies, chunk the dataset with a 20% sliding overlap, apply the Llama-3 chat template, fine-tune the model on the **entire book**, and push adapters/merged weights to Hugging Face.
+4. **Split Train and Validation Datasets**:
+   Run the split script to prepare the continuous pre-training corpus:
+   ```bash
+   python3 continuousPreTrainStyle/splitContinueousPretrainData.py
+   ```
 
-4. **Run Local Fine-Tuned Inference**:
-   Test the custom fine-tuned model directly on your local machine:
+5. **Run GPU Fine-Tuning**:
+   * Open `continuousPreTrainStyle/qloraFineTune.ipynb` in Google Colab or another GPU environment.
+   * Run the cells to mount Google Drive, install Unsloth/Transformers dependencies, chunk the dataset with overlap, apply the Llama-3 chat template, fine-tune the model on the **entire book**, and push adapters/merged weights to Hugging Face.
+
+6. **Run Local Inference**:
+   Test the custom fine-tuned model adapters directly on your local device:
    ```bash
    python3 continuousPreTrainStyle/inference.py
+   ```
+
+7. **Evaluate All Model Adapters**:
+   Compare the Base Model against the CPT adapter and the QA adapter:
+   ```bash
+   python3 evaluate_all_models.py
    ```
 
 ---
 
 ### Phase 2: RAG Ingestion, Retrieval & Evaluation
 
-1. **Ingest and Embed Data**:
-   Embed and upload the scriptures to MongoDB Atlas using the upgraded BGE embeddings:
+1. **Set Up MongoDB Atlas Manually**:
+   * Create a cluster in MongoDB Atlas.
+   * Create a database named `vedic_rag` and a collection named `scriptures`.
+   * Create a Vector Search index named `vedic_index` with the following definition (ensuring dimensions match the BGE embedding model):
+     ```json
+     {
+       "fields": [
+         {
+           "numDimensions": 768,
+           "path": "embedding",
+           "similarity": "cosine",
+           "type": "vector"
+         }
+       ]
+     }
+     ```
+
+2. **Ingest and Embed Data**:
+   Embed and upload the prepared scriptures to MongoDB Atlas:
    ```bash
    python3 RAGStyle/ingest_data.py
    ```
-   *Make sure you configure your MongoDB Vector Search Index (`vedic_index`) to use `numDimensions: 768`.*
 
-2. **Run Interactive RAG CLI**:
-   Ask questions to the fine-tuned model boosted by vector search and Cross-Encoder re-ranking:
+3. **Run Interactive RAG CLI**:
+   Query the fine-tuned model augmented by vector search and cross-encoder re-ranking:
    ```bash
    python3 RAGStyle/rag_inference.py
    ```
 
-3. **Start Local Ollama Server**:
+4. **Start Local Ollama Server & Pull Evaluator LLM**:
    Make sure Ollama is installed and running, then pull the evaluator model:
    ```bash
    ollama pull gemma3:4b-it-qat
    ```
 
-4. **Run RAG Evaluation**:
-   Benchmarking the RAG system using Ragas and local Ollama:
+5. **Run RAG Evaluation (Ragas)**:
+   Benchmark your RAG pipeline's context precision, recall, faithfulness, and answer relevance:
    ```bash
    python3 RAGStyle/evaluate_rag.py
    ```
-   The results will output to `RAGStyle/eval_results.json` and a human-readable summary will save to `RAGStyle/eval_summary.txt`.
 
 ---
 
