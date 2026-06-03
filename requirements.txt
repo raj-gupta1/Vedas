@@ -1,0 +1,16 @@
+torch
+transformers>=4.46.0
+peft
+trl>=0.15.0
+bitsandbytes
+sentence-transformers
+pymongo
+colorama
+python-dotenv
+tqdm
+pypdf
+ragas
+openai
+langchain-community
+nltk
+rouge-score

@@ -6,15 +6,39 @@ from datasets import load_dataset
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Configuration
-RAW_PRETRAIN_FILE = os.path.join(SCRIPT_DIR, "continueousPreTrainData.jsonl")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "data")
+RAW_PRETRAIN_FILE = os.path.join(OUTPUT_DIR, "continueousPreTrainData.jsonl")
 TRAIN_FILE = os.path.join(OUTPUT_DIR, "train_split.jsonl")
 TEST_FILE = os.path.join(OUTPUT_DIR, "test_split.jsonl")
 VAL_FILE = os.path.join(OUTPUT_DIR, "val_split.jsonl")
 
 def main():
-    print("🧹 Starting Continuous Pre-Training Data Split Preparation (50 Train/Test/Val)...")
+    print("🧹 Starting Continuous Pre-Training Data Split Preparation (80/10/10 Train/Val/Test)...")
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    
+    # Merge step: Automatically find all files ending in _pretrain.jsonl in OUTPUT_DIR and merge them
+    print("🔗 Checking for *_pretrain.jsonl files in data directory to merge...")
+    pretrain_files = sorted([
+        os.path.join(OUTPUT_DIR, f) for f in os.listdir(OUTPUT_DIR)
+        if f.endswith("_pretrain.jsonl") and os.path.join(OUTPUT_DIR, f) != RAW_PRETRAIN_FILE
+    ])
+    
+    if not pretrain_files:
+        print("⚠️ No *_pretrain.jsonl files found in data directory. Skipping merge.")
+    else:
+        print(f"🔗 Merging {len(pretrain_files)} files into {RAW_PRETRAIN_FILE}...")
+        total_records_merged = 0
+        with open(RAW_PRETRAIN_FILE, "w", encoding="utf-8") as out_f:
+            for file_path in pretrain_files:
+                file_records = 0
+                with open(file_path, "r", encoding="utf-8") as in_f:
+                    for line in in_f:
+                        if line.strip():
+                            out_f.write(line)
+                            file_records += 1
+                print(f"   📄 Merged {file_records} records from {os.path.basename(file_path)}")
+                total_records_merged += file_records
+        print(f"✅ Merged total of {total_records_merged} records into: {RAW_PRETRAIN_FILE}")
     
     if not os.path.exists(RAW_PRETRAIN_FILE):
         raise FileNotFoundError(f"Could not find continuous pre-train data file at: {RAW_PRETRAIN_FILE}")
@@ -23,16 +47,23 @@ def main():
     raw_dataset = load_dataset("json", data_files=RAW_PRETRAIN_FILE)["train"]
     print(f"📝 Loaded {len(raw_dataset)} total raw records.")
     
-    # Shuffle and select 50 random unique records for each split
-    print("🎲 Shuffling and selecting exactly 50 random unique samples each for train, test, and validation...")
+    # Shuffle and split into 80% train, 10% val, 10% test
+    print("🎲 Shuffling and splitting dataset into 80% Train, 10% Val, 10% Test...")
     shuffled_dataset = raw_dataset.shuffle(seed=42)
     
-    if len(shuffled_dataset) < 150:
-        raise ValueError(f"Dataset has only {len(shuffled_dataset)} records, which is less than the required 150 unique records (50 for train, 50 for test, 50 for val)!")
+    num_records = len(shuffled_dataset)
+    if num_records < 10:
+        raise ValueError(f"Dataset has only {num_records} records, which is too small to split!")
         
-    train_dataset = shuffled_dataset.select(range(0, 50))
-    test_dataset = shuffled_dataset.select(range(50, 100))
-    val_dataset = shuffled_dataset.select(range(100, 150))
+    train_size = int(num_records * 0.8)
+    val_size = int(num_records * 0.1)
+    test_size = num_records - train_size - val_size
+    
+    print(f"📊 Split sizes: Train={train_size}, Val={val_size}, Test={test_size}")
+    
+    train_dataset = shuffled_dataset.select(range(0, train_size))
+    val_dataset = shuffled_dataset.select(range(train_size, train_size + val_size))
+    test_dataset = shuffled_dataset.select(range(train_size + val_size, num_records))
     
     # Save splits
     for name, ds, path in [
