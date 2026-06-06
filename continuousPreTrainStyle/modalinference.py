@@ -102,7 +102,7 @@ class VedaGPTInference:
         print(f"✅ vLLM engine ready in {elapsed:.1f}s")
 
     @modal.method()
-    def generate(self, prompt: str, mode: str = "chat", max_new_tokens: int = 512) -> str:
+    def generate(self, prompt: str, mode: str = "chat", max_new_tokens: int = 1000) -> str:
         """Generate a response using vLLM."""
         from vllm import SamplingParams
 
@@ -119,7 +119,7 @@ class VedaGPTInference:
                 {
                     "role": "system",
                     "content": (
-                    "You are VedaGPT, an expert scholar of the ancient Vedic scriptures like RigVeda, SamaVeda, YajurVeda, AtharvaVeda, Charaka Samhita, Sushruta Samhita, Ayurveda, and Yoga."
+                    "You are VedaGPT, an expert scholar of the ancient Vedic scriptures like RigVeda, SamaVeda, YajurVeda, AtharvaVeda, Charaka Samhita, Sushruta Samhita, Rasa Jala Nidhi, IRJAY (International Research Journal of Ayurveda and Yoga)"
                            "Answer questions accurately based on your knowledge of the Vedas, Upanishads, Charaka Samhita, Sushruta Samhita, and other classical Indian texts."
                             "Maintain the style of writing as per the ancient Vedic texts where required."
                 ),
@@ -170,7 +170,7 @@ def run_interactive(inference: VedaGPTInference, mode: str):
     # Warm the container BEFORE asking for input so Modal's loading spinner doesn't eat stdin
     print(f"  {DIM}⏳ Warming up the remote vLLM engine (may take ~1-2 min)...{RESET}")
     try:
-        inference.generate.remote("warmup", mode="completion", max_new_tokens=1)
+        inference.generate.remote("warmup", mode="completion", max_new_tokens=1000)
         print(f"  {GREEN}✅ Engine ready!{RESET}\n")
     except Exception as e:
         print(f"  {RED}❌ Engine startup failed: {e}{RESET}\n")
