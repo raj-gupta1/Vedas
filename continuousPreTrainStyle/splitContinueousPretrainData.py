@@ -44,14 +44,20 @@ def main():
         raise FileNotFoundError(f"Could not find continuous pre-train data file at: {RAW_PRETRAIN_FILE}")
     
     print(f"📖 Reading raw pre-train data from: {RAW_PRETRAIN_FILE}")
-    raw_dataset = load_dataset("json", data_files=RAW_PRETRAIN_FILE)["train"]
-    print(f"📝 Loaded {len(raw_dataset)} total raw records.")
+    import random
+    raw_records = []
+    with open(RAW_PRETRAIN_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                raw_records.append(json.loads(line))
+    print(f"📝 Loaded {len(raw_records)} total raw records.")
     
     # Shuffle and split into 80% train, 10% val, 10% test
     print("🎲 Shuffling and splitting dataset into 80% Train, 10% Val, 10% Test...")
-    shuffled_dataset = raw_dataset.shuffle(seed=42)
+    random.seed(42)
+    random.shuffle(raw_records)
     
-    num_records = len(shuffled_dataset)
+    num_records = len(raw_records)
     if num_records < 10:
         raise ValueError(f"Dataset has only {num_records} records, which is too small to split!")
         
@@ -61,9 +67,9 @@ def main():
     
     print(f"📊 Split sizes: Train={train_size}, Val={val_size}, Test={test_size}")
     
-    train_dataset = shuffled_dataset.select(range(0, train_size))
-    val_dataset = shuffled_dataset.select(range(train_size, train_size + val_size))
-    test_dataset = shuffled_dataset.select(range(train_size + val_size, num_records))
+    train_dataset = raw_records[:train_size]
+    val_dataset = raw_records[train_size:train_size + val_size]
+    test_dataset = raw_records[train_size + val_size:]
     
     # Save splits
     for name, ds, path in [
