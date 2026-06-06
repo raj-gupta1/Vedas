@@ -376,7 +376,7 @@ def push_and_export_remote():
     from unsloth import FastLanguageModel
     from unsloth.chat_templates import get_chat_template
 
-    hf_token = "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"
+    hf_token = os.environ.get("HF_TOKEN")
 
     model_path = "/checkpoints/lora_model"
     if not os.path.exists(model_path):

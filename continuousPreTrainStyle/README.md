@@ -1,42 +1,62 @@
-# Continuous Pre-Training Data Pipeline for Vedas
+# Continuous Pre-Training & Fine-Tuning Pipeline for Vedas & Ayurveda
 
-This directory contains scripts, tools, and raw dataset structures designed to fetch, parse, clean, and format the four primary Hindu Vedas (**Rig Veda**, **Sama Veda**, **Yajur Veda**, and **Atharva Veda**) into high-quality JSONL pre-training data files.
+This directory contains scripts, tools, and raw dataset structures designed to fetch, parse, clean, and format the four primary Hindu Vedas (**Rig Veda**, **Sama Veda**, **Yajur Veda**, and **Atharva Veda**) as well as Ayurvedic texts (**Charaka Samhita**, **Sushruta Samhita**, etc.) into high-quality JSONL pre-training data files. It also houses the **local** and **cloud-based (Modal)** fine-tuning and inference logic.
 
 ## 📁 Directory Structure
 
+### 1. Data Preparation & Scrapers
 *   `data/`: Contains final parsed continuous pre-training JSONL datasets.
-    *   `rig_veda_pretrain.jsonl` (Rig Veda English)
-    *   `sama_veda_pretrain.jsonl` (Sama Veda English)
-    *   `yajur_veda_pretrain.jsonl` (Unified Black & White Yajur Veda English)
-    *   `atharva_veda_pretrain.jsonl` (Atharva Veda English)
-    *   `continueousPreTrainData.jsonl` (Merged master pre-training dataset)
-    *   `README.md` (Detailed dataset composition, authorship, and schema description)
-*   `scrape_rig_veda.py`: Web scraper for the Rig Veda (Ralph T.H. Griffith English translation).
-*   `scrape_sama_veda.py`: Web scraper for the Sama Veda (Ralph T.H. Griffith English translation).
-*   `scrape_yajur_veda.py`: Web scraper for both the Black (Keith) and White (Griffith) Yajur Vedas.
-*   `scrape_atharva_veda.py`: Web scraper for the Atharva Veda (Ralph T.H. Griffith English translation).
-*   `prepareContinueousPreTrainData.py`: PDF parser and chunker for bilingual/PDF sources.
+*   `scrape_*.py`: Web scrapers for the Rig Veda, Sama Veda, Yajur Veda, and Atharva Veda.
+*   `charaka_scraper.py` / `sushruta_scraper.py` / `rasa_jala_nidhi_scraper.py` / `irjay_scraper.py`: Ayurvedic text extractors.
+*   `prepareContinueousPreTrainData.py` & `splitContinueousPretrainData.py`: Tools for parsing PDF manuscripts and splitting the train/val datasets.
+*   `clean_and_split_data.py` / `normalize_pretrain_data.py` / `merge_pt_data.py`: Data cleaning, normalization, and merging utilities.
+
+### 2. Fine-Tuning Scripts
+*   **`modalFineTune.py` (New ✨)**: **Cloud/Serverless Fine-Tuning.** A fully automated script running on [Modal](https://modal.com) that provisions an L40S GPU, fine-tunes `Qwen/Qwen2.5-14B-Instruct` using Unsloth, merges the LoRA adapters, and pushes directly to Hugging Face.
+*   **`qloraFineTune.ipynb` (Classic)**: **Local/Colab Fine-Tuning.** A Jupyter Notebook designed to run Unsloth QLoRA fine-tuning on local GPUs or Google Colab environments (typically using `Llama-3.2-3B`).
+*   `finetuneContinueousPretrain.py` & `evaluateContinueousPretrain.py`: [DEPRECATED] Unused local training scripts.
+
+### 3. Inference Scripts
+*   **`modalinference.py` (New ✨)**: **Cloud/Serverless Inference.** Blazing fast inference hosted on Modal using the **vLLM** engine. Features continuous batching, PagedAttention, and an interactive CLI prompt (`modal run -q continuousPreTrainStyle/modalinference.py`).
+*   **`inference.py`**: **Local Inference.** Standard `transformers`-based script to test LoRA adapters on your local machine.
 
 ---
 
 ## 🛠️ Usage
 
+### Running the Scrapers
 All scrapers are designed to resolve output paths absolute to this script directory, automatically placing files inside the `data/` subdirectory.
 
-To run any scraper, run it using Python:
+```bash
+# Run Vedic scrapers
+python3 scrape_rig_veda.py
+python3 scrape_sama_veda.py
+python3 scrape_yajur_veda.py
+python3 scrape_atharva_veda.py
+
+# Run Ayurvedic scrapers
+python3 charaka_scraper.py
+python3 sushruta_scraper.py
+```
+
+### Running Fine-Tuning
+Depending on your compute environment, pick one of the tracks:
 
 ```bash
-# Run the Rig Veda scraper
-python3 scrape_rig_veda.py
+# Track A: Modal Serverless Cloud GPU
+modal run continuousPreTrainStyle/modalFineTune.py
 
-# Run the Sama Veda scraper
-python3 scrape_sama_veda.py
+# Track B: Google Colab / Local
+# Open continuousPreTrainStyle/qloraFineTune.ipynb in your Jupyter environment
+```
 
-# Run the Yajur Veda scraper (scrapes and merges both Black & White Yajur Vedas)
-python3 scrape_yajur_veda.py
+### Running Inference
+```bash
+# Track A: Modal Serverless vLLM
+modal run -q continuousPreTrainStyle/modalinference.py
 
-# Run the Atharva Veda scraper
-python3 scrape_atharva_veda.py
+# Track B: Local HuggingFace Transformers
+python3 continuousPreTrainStyle/inference.py
 ```
 
 ---
@@ -44,8 +64,9 @@ python3 scrape_atharva_veda.py
 ## 🏛️ Dataset & Chunking Overview
 
 *   **Rig Veda & Atharva Veda**: Extracted at the **Hymn (Sukta)** level, creating rich narrative units for continuous pre-training.
-*   **Sama Veda**: Scraped at **Decade/Hymn** level, or page-chunked via PDF (4 chunks per page with 150-char overlap).
+*   **Sama Veda**: Scraped at **Decade/Hymn** level.
 *   **Yajur Veda**: Integrates the **Black Yajur Veda** (grouped at Anuvaka level) and the **White Yajur Veda** (grouped at Verse level) into one file.
-*   **PDF Pipeline**: For printed manuscripts, parses text page-by-page, chunking each into 4 overlapping parts (150-character overlap) to preserve translation pairs without context clipping.
+*   **Ayurvedic Texts**: Hierarchical chunking retaining Sloka and Chapter context.
+*   **PDF Pipeline**: For printed manuscripts, parses text page-by-page, chunking each into overlapping parts (150-character overlap) to preserve translation pairs without context clipping.
 
 For specific dataset parameters, schemas, and licence details, see [data/README.md](file:///Users/raj/PycharmProjects/VedaGPT/continuousPreTrainStyle/data/README.md).
