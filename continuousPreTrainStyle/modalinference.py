@@ -69,6 +69,7 @@ inference_image = (
         "/model_cache": model_cache_volume,
         "/checkpoints": checkpoint_volume,
     },
+    secrets=[modal.Secret.from_dotenv()],
 )
 class VedaGPTInference:
 
