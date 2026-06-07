@@ -109,7 +109,8 @@ def chunk_dataset_tokenized(dataset_list, tokenizer, target_chunk_size=4096, ove
     volumes={
         "/model_cache": model_cache_volume,
         "/checkpoints": checkpoint_volume,
-    }
+    },
+    secrets=[modal.Secret.from_dotenv()],
 )
 def train_remote():
     import json
@@ -251,7 +252,8 @@ def train_remote():
     memory=32768,
     volumes={
         "/checkpoints": checkpoint_volume,
-    }
+    },
+    secrets=[modal.Secret.from_dotenv()],
 )
 def run_inference_remote():
     import os
@@ -367,7 +369,8 @@ def run_inference_remote():
     timeout=2 * 3600,
     volumes={
         "/checkpoints": checkpoint_volume,
-    }
+    },
+    secrets=[modal.Secret.from_dotenv()],
 )
 def push_and_export_remote():
     import os
