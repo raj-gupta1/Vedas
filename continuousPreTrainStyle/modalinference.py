@@ -91,7 +91,7 @@ class VedaGPTInference:
         t0 = time.time()
         self.llm = LLM(
             model=model_source,
-            max_model_len=4096,
+            max_model_len=16384,  # Increased context window to 16k tokens
             dtype="bfloat16",
             trust_remote_code=True,
             gpu_memory_utilization=0.85,
@@ -136,6 +136,8 @@ class VedaGPTInference:
 
         outputs = self.llm.generate([formatted], sampling_params, use_tqdm=False)
         return outputs[0].outputs[0].text.strip()
+
+
 
 
 # ---------------------------------------------------------------------------
