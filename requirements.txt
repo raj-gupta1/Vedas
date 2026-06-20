@@ -14,3 +14,4 @@ openai
 langchain-community
 nltk
 rouge-score
+modal

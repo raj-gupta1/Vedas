@@ -40,8 +40,9 @@ graph TD
 * Loaded in **4-bit quantization** (`nf4` double quantization) via Unsloth during fine-tuning.
 
 ### 2. Fine-Tuning (GPU-Powered)
-We support two primary fine-tuning tracks:
-* **Modal Serverless Fine-Tuning**: Handled via `continuousPreTrainStyle/modalFineTune.py`. Automatically provisions cloud GPUs, attaches persistent volumes for checkpointing, trains using Unsloth, merges the model, and pushes directly to Hugging Face.
+We support three primary fine-tuning tracks:
+* **Modal Serverless Fine-Tuning (Base)**: Handled via `continuousPreTrainStyle/modalFineTune.py`. Automatically provisions cloud GPUs, attaches persistent volumes for checkpointing, trains using Unsloth, merges the model, and pushes directly to Hugging Face.
+* **Modal Serverless Fine-Tuning (LoRA Resumed)**: Handled via `continuousPreTrainStyle/modalLORAfineTune.py`. Resumes training from an existing 14B LoRA adapter (`shinigamiRaj/IndicVedas-LoRA`) on Qwen2.5-14B-Instruct with higher learning rates and 100% dataset coverage for maximum knowledge override.
 * **Jupyter/Colab Fine-Tuning**: Handled via `continuousPreTrainStyle/qloraFineTune.ipynb`.
 * *Note: The scripts `continuousPreTrainStyle/finetuneContinueousPretrain.py` and `continuousPreTrainStyle/evaluateContinueousPretrain.py` are deprecated.*
 
@@ -90,10 +91,14 @@ We support two primary fine-tuning tracks:
 
 #### Option A: Modal Serverless Cloud (New ✨)
 1. **Deploy Fine-Tuning Job**:
-   This spins up an L40S GPU on Modal, runs Unsloth fine-tuning, merges the LoRA adapters, and pushes to Hugging Face.
-   ```bash
-   modal run continuousPreTrainStyle/modalFineTune.py
-   ```
+   * For standard base model training:
+     ```bash
+     modal run continuousPreTrainStyle/modalFineTune.py
+     ```
+   * For resumed LoRA training (aggressive override):
+     ```bash
+     modal run --detach continuousPreTrainStyle/modalLORAfineTune.py::train
+     ```
 2. **Run vLLM Interactive Inference**:
    Deploy the fine-tuned model to a fast vLLM engine hosted on Modal with a clean, interactive CLI:
    ```bash
@@ -134,13 +139,40 @@ We support two primary fine-tuning tracks:
 
 ---
 
+### Phase 4: Local Web UI & Docker Compose (New ✨)
+
+We provide a glassmorphic Web UI that connects to your MongoDB Vector Search index and the Modal serverless inference engine. You can run the interface directly or fully dockerized.
+
+#### Option A: Run Directly with Python
+1. Activate your virtual environment and start the web server:
+   ```bash
+   source continuousPreTrainStyle/vedaFineTune/bin/activate
+   python3 continuousPreTrainStyle/webui.py
+   ```
+2. Open [http://localhost:8080](http://localhost:8080) in your browser.
+
+#### Option B: Run Docker Compose (Recommended)
+This automatically builds the application container and provisions a local MongoDB database instance.
+1. Spin up the multi-container stack:
+   ```bash
+   docker-compose up --build
+   ```
+2. Open [http://localhost:8080](http://localhost:8080) in your browser.
+
+---
+
 ## 📂 Project Structure
 ```text
 ├── books/                             # PDF source books (Sama Veda, etc.)
 ├── continuousPreTrainStyle/           # Continued Pre-training files
 │   ├── data/                          # Folder for pre-train datasets
+│   ├── frontend/                      # Web UI glassmorphism assets
+│   │   └── index.html                 # Frontend HTML/CSS/JS interface
 │   ├── modalFineTune.py               # [ACTIVE] Modal Serverless Unsloth training script
+│   ├── modalLORAfineTune.py           # [ACTIVE] Cloud LoRA-resumed fine-tuning script
 │   ├── modalinference.py              # [ACTIVE] Modal Serverless vLLM inference CLI
+│   ├── webui.py                       # [ACTIVE] Local Web UI server with RAG
+│   ├── fix_hf_config.py               # HF config corrector for vLLM compatibility
 │   ├── qloraFineTune.ipynb            # [ACTIVE] Colab/Jupyter Fine-tuning notebook
 │   ├── prepareContinueousPreTrainData.py # PDF overlapping page-chunk extractor
 │   ├── inference.py                   # Local fine-tuned model tester
@@ -152,6 +184,7 @@ We support two primary fine-tuning tracks:
 │   ├── rag_inference.py               # Interactive RAG search & chat script
 │   └── evaluate_rag.py                # Ragas evaluation runner (via Ollama)
 ├── Dockerfile                         # Container setup for libraries installation
+├── docker-compose.yml                 # Orchestration for local MongoDB & Web UI
 ├── requirements.txt                   # Master Python library dependency list
 ├── .env                               # Root environment secrets
 └── README.md                          # Main project documentation

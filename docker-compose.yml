@@ -1,0 +1,28 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: vedagpt-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  webui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vedagpt-webui
+    command: python continuousPreTrainStyle/webui.py
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

@@ -24,5 +24,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Default command (can be overridden by user)
+# Expose port for the Web UI
+EXPOSE 8080
+
+# Default command (runs RAG CLI by default; can be overridden to run Web UI)
 CMD ["python", "RAGStyle/rag_inference.py"]
