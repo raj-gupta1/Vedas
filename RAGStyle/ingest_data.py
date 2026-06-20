@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import torch
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from sentence_transformers import SentenceTransformer
@@ -29,22 +30,50 @@ EMBEDDING_DIM = 768
 
 print(f"🚀 {Fore.LIGHTCYAN_EX}Starting Enhanced Vector Data Ingestion...{Fore.RESET}")
 
-# 1. Connect to MongoDB Atlas
-print(f"🔌 Connecting to MongoDB...")
-client = MongoClient(MONGODB_URI)
-db = client[DB_NAME]
-collection = db[COLLECTION_NAME]
+# 1. Connect to MongoDB with Fallback
+db = None
+collection = None
+is_local = False
 
-# Drop old data from the previous (weaker) embedding run
-existing_count = collection.count_documents({})
-if existing_count > 0:
-    print(f"⚠️  Found {existing_count} existing documents. Dropping old collection for re-ingestion...")
-    collection.drop()
+try:
+    print(f"🔌 Connecting to MongoDB configured URI: {MONGODB_URI}...")
+    client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+    # Trigger connection test
+    client.server_info()
+    print("✅ Connected to Atlas MongoDB successfully!")
+    db = client[DB_NAME]
     collection = db[COLLECTION_NAME]
+except Exception as e:
+    print(f"⚠️  Failed to connect to configured MongoDB: {e}")
+    print("🔄 Falling back to local MongoDB (mongodb://localhost:27017/)...")
+    try:
+        client = MongoClient("mongodb://localhost:27017/", serverSelectionTimeoutMS=3000)
+        client.server_info()
+        print("✅ Connected to local MongoDB successfully!")
+        db = client[DB_NAME]
+        collection = db[COLLECTION_NAME]
+        is_local = True
+    except Exception as local_e:
+        print(f"❌ Failed to connect to local MongoDB: {local_e}")
+        exit(1)
+
+# Drop old data from the previous embedding run
+try:
+    existing_count = collection.count_documents({})
+    if existing_count > 0:
+        print(f"⚠️  Found {existing_count} existing documents in {COLLECTION_NAME}. Dropping old collection for re-ingestion...")
+        collection.drop()
+        # Reinitialize collection object after drop
+        collection = db[COLLECTION_NAME]
+except Exception as e:
+    print(f"❌ Error operating on collection: {e}")
+    exit(1)
 
 # 2. Load the Embedding Model
 print(f"🧠 Loading Embedding Model: {EMBEDDING_MODEL}...")
-embedder = SentenceTransformer(EMBEDDING_MODEL)
+device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
+print(f"   Using device: {device}")
+embedder = SentenceTransformer(EMBEDDING_MODEL, device=device)
 
 # 3. Load Data
 if not os.path.exists(DATA_PATH):
@@ -52,11 +81,59 @@ if not os.path.exists(DATA_PATH):
     exit(1)
 
 print(f"📖 Loading dataset from {DATA_PATH}...")
-data = []
+
+
+def parse_header(text):
+    """
+    Parse the [[ Collection: X | Book: Y | ... ]] header from the new data format.
+    Returns (metadata_dict, body_text).
+    """
+    header_pattern = re.compile(r'^\[\[\s*(.*?)\s*\]\]\s*', re.DOTALL)
+    match = header_pattern.match(text)
+
+    if not match:
+        return {}, text
+
+    header_str = match.group(1)
+    body = text[match.end():].strip()
+
+    metadata = {}
+    for field in header_str.split("|"):
+        field = field.strip()
+        if ":" in field:
+            key, value = field.split(":", 1)
+            key = key.strip().lower()
+            value = value.strip()
+            metadata[key] = value
+
+    return metadata, body
+
+
+raw_data = []
 with open(DATA_PATH, 'r', encoding="utf-8") as f:
     for line in f:
         if line.strip():
-            data.append(json.loads(line))
+            raw_data.append(json.loads(line))
+
+# Parse headers and normalize into structured records
+data = []
+for entry in raw_data:
+    text = entry.get("text", "")
+    # Check if this record already has structured fields (old format)
+    if entry.get("collection"):
+        data.append(entry)
+    else:
+        # New format: parse the [[ ... ]] header
+        metadata, body = parse_header(text)
+        data.append({
+            "text": body,
+            "collection": metadata.get("collection", "Unknown"),
+            "book": metadata.get("book", ""),
+            "hymn": metadata.get("hymn", ""),
+            "title": metadata.get("title", ""),
+            "translator": metadata.get("translator", ""),
+            "source": metadata.get("source", ""),
+        })
 
 print(f"Found {len(data)} records.")
 
@@ -174,23 +251,22 @@ def build_metadata_prefix(entry):
 
 
 documents_to_insert = []
+texts_to_embed = []
 
-print(f"✂️  Smart chunking and embedding text...")
-for entry in tqdm(data, desc="Processing records"):
+print(f"✂️  Smart chunking and preparing texts...")
+for idx, entry in enumerate(tqdm(data, desc="Chunking records")):
     chunks = smart_chunk(entry)
     metadata_prefix = build_metadata_prefix(entry)
+    doc_id = f"doc_{idx}"
     
     for i, chunk in enumerate(chunks):
-        # Prepend metadata to the text that gets embedded — this dramatically helps retrieval
-        # because the embedder now "knows" this chunk is from "Rig Veda, Book 10, HYMN CXCI — Agni"
         text_for_embedding = f"{metadata_prefix}: {chunk}" if metadata_prefix else chunk
-        
-        embedding = embedder.encode(text_for_embedding).tolist()
+        texts_to_embed.append(text_for_embedding)
         
         doc = {
+            "doc_id": doc_id,
             "text": chunk,                                       # Original text (for display)
             "text_with_context": text_for_embedding,             # Metadata-enriched (for search quality)
-            "embedding": embedding,
             "collection": entry.get("collection", "Unknown"),
             "book": entry.get("book", ""),
             "hymn": entry.get("hymn", ""),
@@ -201,6 +277,13 @@ for entry in tqdm(data, desc="Processing records"):
             "total_chunks": len(chunks),
         }
         documents_to_insert.append(doc)
+
+print(f"\n🧠 Generating embeddings in batch mode for {len(texts_to_embed)} chunks...")
+embeddings = embedder.encode(texts_to_embed, batch_size=128, show_progress_bar=True)
+
+print("💾 Assigning embeddings to documents...")
+for doc, emb in zip(documents_to_insert, embeddings):
+    doc["embedding"] = emb.tolist()
 
 print(f"\n📊 Total chunks created: {len(documents_to_insert)} (from {len(data)} records)")
 
