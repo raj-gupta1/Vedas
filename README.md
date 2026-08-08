@@ -31,6 +31,7 @@ graph TD
 ```
 
 ---
+## Huggingface link: https://huggingface.co/shinigamiRaj/IndicVedas
 
 ## 💻 Tech Stack & Models Used
 
